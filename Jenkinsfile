@@ -1,7 +1,6 @@
 pipeline {
     agent {
         node {
-            label 'any'
             customWorkspace '/var/jenkins_home/workspace/my-project'  // Setting custom workspace
         }
     }
