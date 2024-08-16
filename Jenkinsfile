@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label 'any'
+            customWorkspace '/var/jenkins_home/workspace/my-project'  // Setting custom workspace
+        }
+    }
 
     environment {
         // Defining environment variables here
@@ -12,23 +17,26 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                // The command to build project, e.g., 'mvn clean package'
-                sh 'echo "Maven: mvn clean package"'
+                // Replace this with your actual build command, for example:
+                sh 'mvn clean package'  // For Maven projects
+                // For Node.js projects, use:
+                // sh 'npm run build'
             }
         }
 
         stage('Unit and Integration Tests') {
             steps {
-                echo 'Running tests...'
-                // The command to run tests, e.g., 'mvn test'
-                sh 'echo "Testing tools: JUnit for unit tests, Mockito for integration tests"'
+                echo 'Running unit and integration tests...'
+                // Replace this with your actual test command, for example:
+                sh 'mvn test'  // For Java/Maven projects
+                // For Node.js projects, use:
+                // sh 'npm test'
             }
             post {
                 always {
-                    // Send email notification after tests (part of tasksheet)
                     emailext(
                         subject: "Jenkins Build #${BUILD_NUMBER} - Tests: ${currentBuild.currentResult}",
-                        body: "Please see the attached logs for more details.",
+                        body: "The testing stage has completed with result: ${currentBuild.currentResult}. Please review the attached logs for more details.",
                         to: "${RECIPIENT_EMAIL}",
                         attachLog: true
                     )
@@ -39,23 +47,26 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 echo 'Analyzing code...'
-                // The command to analyze  code, e.g., SonarQube analysis
-                sh 'echo "Code Analysis tool: SonarQube"'
+                // Replace this with your actual code analysis tool command, for example:
+                sh 'sonar-scanner'  // For SonarQube analysis
+                // Or for Node.js linting:
+                // sh 'npm run lint'
             }
         }
 
         stage('Security Scan') {
             steps {
                 echo 'Performing security scan...'
-                // The command to perform security scan, e.g., using OWASP Dependency Check
-                sh 'echo "Security Scan tool: OWASP Dependency Check"'
+                // Replace this with your actual security scan tool command, for example:
+                sh 'dependency-check --project myApp --scan ./'
+                // Or for Node.js security audit:
+                // sh 'npm audit'
             }
             post {
                 always {
-                    // Send email notification after security scan (part of tasksheet)
                     emailext(
                         subject: "Jenkins Build #${BUILD_NUMBER} - Security Scan: ${currentBuild.currentResult}",
-                        body: "Please see the attached logs for more details.",
+                        body: "The security scan stage has completed with result: ${currentBuild.currentResult}. Please review the attached logs for more details.",
                         to: "${RECIPIENT_EMAIL}",
                         attachLog: true
                     )
@@ -65,38 +76,55 @@ pipeline {
 
         stage('Deploy to Staging') {
             steps {
-                echo 'Deploying to staging environment...'
-                // Simulate a deployment to a staging server
-                sh "echo 'Deploying to ${STAGING_SERVER}'"
+                echo "Deploying to staging environment: ${STAGING_SERVER}..."
+                // Replace this with your actual deployment command, for example:
+                sh "scp -r ./target/my-app.war ec2-user@${STAGING_SERVER}:/var/www/my-app"  // For Java/Maven projects
+                // For Node.js projects, you might use:
+                // sh "scp -r ./build/* ec2-user@${STAGING_SERVER}:/var/www/my-app"
             }
         }
 
         stage('Integration Tests on Staging') {
             steps {
-                echo 'Running integration tests on staging...'
-                // Simulate running integration tests in the staging environment
-                sh 'echo "Running integration tests on staging server"'
+                echo 'Running integration tests on the staging environment...'
+                // Replace this with your actual integration test command, for example:
+                sh 'mvn verify'  // For Java/Maven projects
+                // For Node.js projects, you might use:
+                // sh 'npm run test:integration'
             }
         }
 
         stage('Deploy to Production') {
             steps {
-                echo 'Deploying to production environment...'
-                // Simulate a deployment to a production server
-                sh "echo 'Deploying to ${PRODUCTION_SERVER}'"
+                echo "Deploying to production environment: ${PRODUCTION_SERVER}..."
+                // Replace this with your actual deployment command, for example:
+                sh "scp -r ./target/my-app.war ec2-user@${PRODUCTION_SERVER}:/var/www/my-app"  // For Java/Maven projects
+                // For Node.js projects, you might use:
+                // sh "scp -r ./build/* ec2-user@${PRODUCTION_SERVER}:/var/www/my-app"
             }
         }
     }
 
     post {
+        success {
+            emailext(
+                subject: "Jenkins Build #${BUILD_NUMBER} - Success",
+                body: "The pipeline has successfully completed. Please review the logs if necessary.",
+                to: "${RECIPIENT_EMAIL}",
+                attachLog: false
+            )
+        }
         failure {
-            // Send email notification for any failed stage in the pipeline
             emailext(
                 subject: "Jenkins Build #${BUILD_NUMBER} - Failed",
-                body: "Unfortunately, the build has failed. Please check the Jenkins logs for more information.",
+                body: "Unfortunately, the build has failed. Please check the attached logs for more information.",
                 to: "${RECIPIENT_EMAIL}",
                 attachLog: true
             )
+        }
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()  // Clean up the workspace after the build
         }
     }
 }
