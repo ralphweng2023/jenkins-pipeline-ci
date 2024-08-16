@@ -2,94 +2,101 @@ pipeline {
     agent any
 
     environment {
-        NODE_HOME = tool name: 'NodeJS 14', type: 'NodeJS'
-        PATH = "${NODE_HOME}/bin:${env.PATH}"
+        // Defining environment variables here
+        STAGING_SERVER = 'AWS_EC2_staging.example.com'
+        PRODUCTION_SERVER = 's214331778.com'
+        RECIPIENT_EMAIL = 's214331778@deakin.edu.au'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo 'Checking out the code from GitHub...'
-                checkout scm
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                echo 'Installing dependencies...'
-                sh 'npm install'
-            }
-        }
-
         stage('Build') {
             steps {
-                echo 'Building the code...'
-                // Optional: Compile or bundle the code if necessary
-                sh 'npm run build'
+                echo 'Building the project...'
+                // The command to build project, e.g., 'mvn clean package'
+                sh 'echo "Maven: mvn clean package"'
             }
         }
 
         stage('Unit and Integration Tests') {
             steps {
-                echo 'Running unit and integration tests...'
-                // Run tests (e.g., using Mocha, Jest, etc.)
-                sh 'npm test'
+                echo 'Running tests...'
+                // The command to run tests, e.g., 'mvn test'
+                sh 'echo "Testing tools: JUnit for unit tests, Mockito for integration tests"'
+            }
+            post {
+                always {
+                    // Send email notification after tests (part of tasksheet)
+                    emailext(
+                        subject: "Jenkins Build #${BUILD_NUMBER} - Tests: ${currentBuild.currentResult}",
+                        body: "Please see the attached logs for more details.",
+                        to: "${RECIPIENT_EMAIL}",
+                        attachLog: true
+                    )
+                }
             }
         }
 
         stage('Code Analysis') {
             steps {
-                echo 'Running code quality analysis...'
-                // Run ESLint or another code quality tool
-                sh 'npm run lint'
+                echo 'Analyzing code...'
+                // The command to analyze  code, e.g., SonarQube analysis
+                sh 'echo "Code Analysis tool: SonarQube"'
             }
         }
 
         stage('Security Scan') {
             steps {
-                echo 'Running security scan...'
-                // Run npm audit for vulnerability check
-                sh 'npm audit'
+                echo 'Performing security scan...'
+                // The command to perform security scan, e.g., using OWASP Dependency Check
+                sh 'echo "Security Scan tool: OWASP Dependency Check"'
+            }
+            post {
+                always {
+                    // Send email notification after security scan (part of tasksheet)
+                    emailext(
+                        subject: "Jenkins Build #${BUILD_NUMBER} - Security Scan: ${currentBuild.currentResult}",
+                        body: "Please see the attached logs for more details.",
+                        to: "${RECIPIENT_EMAIL}",
+                        attachLog: true
+                    )
+                }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
                 echo 'Deploying to staging environment...'
-                // Deployment to staging server, e.g., AWS
-                sh 'aws deploy create-deployment --application-name myApp --deployment-group-name staging'
+                // Simulate a deployment to a staging server
+                sh "echo 'Deploying to ${STAGING_SERVER}'"
             }
         }
 
         stage('Integration Tests on Staging') {
             steps {
-                echo 'Running integration tests on staging environment...'
-                // Run integration tests on staging
-                sh 'npm run test:integration'
+                echo 'Running integration tests on staging...'
+                // Simulate running integration tests in the staging environment
+                sh 'echo "Running integration tests on staging server"'
             }
         }
 
         stage('Deploy to Production') {
             steps {
                 echo 'Deploying to production environment...'
-                // Deployment to production server, e.g., AWS
-                sh 'aws deploy create-deployment --application-name myApp --deployment-group-name production'
+                // Simulate a deployment to a production server
+                sh "echo 'Deploying to ${PRODUCTION_SERVER}'"
             }
         }
     }
 
     post {
-        always {
-            echo 'Cleaning up the workspace...'
-            cleanWs()
-        }
-        success {
-            echo 'Pipeline succeeded!'
-            mail to: 'developer@example.com',
-                subject: "Pipeline Success: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                body: "The pipeline completed successfully at stage: ${currentBuild.currentResult}."
-        }
         failure {
-            echo 'Pipeline failed!'
-            mail to: 'developer@example.com',
-                subject: "Pipeline Failed: ${env.JOB_NAME} [${env.BUILD_NUMBER}]
+            // Send email notification for any failed stage in the pipeline
+            emailext(
+                subject: "Jenkins Build #${BUILD_NUMBER} - Failed",
+                body: "Unfortunately, the build has failed. Please check the Jenkins logs for more information.",
+                to: "${RECIPIENT_EMAIL}",
+                attachLog: true
+            )
+        }
+    }
+}
