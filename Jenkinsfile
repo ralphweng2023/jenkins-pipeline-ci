@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'any'  // This will select any available node
+            label 'master'  // This will select any available node
             customWorkspace '/var/jenkins_home/workspace/my-project'  // Setting custom workspace
         }
     }
