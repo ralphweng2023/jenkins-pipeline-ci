@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'master'  // This will select any available node
+            label 'master'  // This will select the master node
             customWorkspace '/var/jenkins_home/workspace/my-project'  // Setting custom workspace
         }
     }
@@ -14,6 +14,13 @@ pipeline {
     }
 
     stages {
+        stage('Mark Directory as Safe for Git') {
+            steps {
+                echo 'Marking workspace directory as safe for Git...'
+                sh 'git config --global --add safe.directory /var/jenkins_home/workspace/my-project'
+            }
+        }
+
         stage('Build') {
             steps {
                 echo 'Building the project...'
@@ -30,7 +37,7 @@ pipeline {
             }
             post {
                 always {
-                    // Send email notification after tests (part of tasksheet)
+                    // Send email notification after tests
                     emailext(
                         subject: "Jenkins Build #${BUILD_NUMBER} - Tests: ${currentBuild.currentResult}",
                         body: "Please see the attached logs for more details.",
@@ -57,7 +64,7 @@ pipeline {
             }
             post {
                 always {
-                    // Send email notification after security scan (part of tasksheet)
+                    // Send email notification after security scan
                     emailext(
                         subject: "Jenkins Build #${BUILD_NUMBER} - Security Scan: ${currentBuild.currentResult}",
                         body: "Please see the attached logs for more details.",
