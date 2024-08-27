@@ -2,7 +2,7 @@ pipeline {
     agent {
         node {
             label 'master'  // This will select the master node
-            //customWorkspace '/var/jenkins_home/workspace/my-project'  // Setting custom workspace
+            customWorkspace '/var/jenkins_home/workspace/my-project'  // Setting custom workspace
         }
     }
 
