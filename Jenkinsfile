@@ -105,7 +105,7 @@ pipeline {
                 subject: "Jenkins Build #${BUILD_NUMBER} - Success",
                 body: "The pipeline has successfully completed. Please review the logs if necessary.",
                 to: "${RECIPIENT_EMAIL}",
-                attachLog: false
+                attachLog: true
             )
         }
         failure {
